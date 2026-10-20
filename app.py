@@ -7,17 +7,46 @@ import io
 WIDTH = 354
 HEIGHT = 591
 
-def generate_label(name, card_type, text, power, toughness, rotate_landscape):
+# --- MTG Data Dictionaries ---
+MTG_TYPES = [
+    "✏️ Custom Type...",
+    "Token Creature", "Token Artifact", "Token Enchantment", "Token",
+    "Creature", "Artifact", "Enchantment", "Land", "Planeswalker", "Battle"
+]
+
+MTG_SUBTYPES = [
+    "None", "✏️ Custom Subtype...",
+    "Advisor", "Angel", "Ape", "Archer", "Artificer", "Assassin", "Assembly-Worker", "Avatar", 
+    "Barbarian", "Basilisk", "Bat", "Bear", "Beast", "Berserker", "Bird", "Blood", "Boar", 
+    "Cat", "Centaur", "Cleric", "Clue", "Construct", "Coward", "Crab", "Crocodile", 
+    "Demon", "Devil", "Dinosaur", "Djinn", "Dog", "Dragon", "Drake", "Druid", "Dwarf", 
+    "Elemental", "Elephant", "Elf", "Equipment", 
+    "Faerie", "Fish", "Food", "Fox", "Frog", "Fungus", 
+    "Gargoyle", "Giant", "Goblin", "God", "Golem", "Griffin", 
+    "Hag", "Harpy", "Hellion", "Hippopotamus", "Homunculus", "Horror", "Horse", "Hound", "Human", "Hydra", 
+    "Illusion", "Imp", "Incarnation", "Incubator", "Insect", 
+    "Juggernaut", "Kavu", "Kithkin", "Knight", "Kobold", "Kraken", 
+    "Leech", "Leviathan", "Lizard", "Map", "Manticore", "Masticore", "Mercenary", "Merfolk", "Minotaur", "Monk", "Mutant", "Myr", "Mystic", 
+    "Naga", "Ninja", "Noble", "Nymph", "Ogre", "Ooze", "Orc", 
+    "Pegasus", "Pest", "Phyrexian", "Pilot", "Plant", "Powerstone", 
+    "Rat", "Rebel", "Rhino", "Rogue", 
+    "Salamander", "Samurai", "Saproling", "Scarecrow", "Scorpion", "Serpent", "Shade", "Shaman", "Shapeshifter", "Shard", "Skeleton", "Slime", "Sliver", "Soldier", "Soltari", "Sphinx", "Spider", "Spirit", "Sponge", "Squid", "Squirrel", "Starfish", "Survivor", 
+    "Tentacle", "Thopter", "Treasure", "Treefolk", "Troll", "Turtle", 
+    "Unicorn", "Vampire", "Vedalken", "Viashino", "Wall", "Warrior", "Weird", "Werewolf", "Whale", "Wizard", "Wolf", "Wolverine", "Wombat", "Worm", "Wraith", "Wurm", 
+    "Yeti", "Zombie"
+]
+
+def generate_label(name, card_type_str, text, power, toughness, rotate_landscape):
     # Create white canvas
     img = Image.new('RGB', (WIDTH, HEIGHT), color='white')
     draw = ImageDraw.Draw(img)
 
-    # Load fonts (using system fonts installed via Docker)
+    # Increased Font Sizes
     try:
-        font_title = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSansBold.ttf", 26)
-        font_type = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSansBold.ttf", 20)
-        font_text = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 18)
-        font_pt = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSansBold.ttf", 24)
+        font_title = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSansBold.ttf", 32)
+        font_type  = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSansBold.ttf", 26)
+        font_text  = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 24)
+        font_pt    = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSansBold.ttf", 30)
     except IOError:
         font_title = font_type = font_text = font_pt = ImageFont.load_default()
 
@@ -25,25 +54,25 @@ def generate_label(name, card_type, text, power, toughness, rotate_landscape):
     draw.rectangle([10, 10, WIDTH-10, HEIGHT-10], outline="black", width=4)
 
     # Name Box
-    draw.rectangle([15, 15, WIDTH-15, 60], outline="black", width=2, fill="#e8e8e8")
+    draw.rectangle([15, 15, WIDTH-15, 65], outline="black", width=2, fill="#e8e8e8")
     draw.text((25, 22), name, font=font_title, fill="black")
 
     # Blank Art Box Placeholder
-    draw.rectangle([15, 65, WIDTH-15, 315], outline="black", width=2, fill="#ffffff")
+    draw.rectangle([15, 70, WIDTH-15, 315], outline="black", width=2, fill="#ffffff")
 
     # Type Box
-    draw.rectangle([15, 320, WIDTH-15, 360], outline="black", width=2, fill="#e8e8e8")
-    draw.text((25, 328), card_type, font=font_type, fill="black")
+    draw.rectangle([15, 320, WIDTH-15, 365], outline="black", width=2, fill="#e8e8e8")
+    draw.text((25, 328), card_type_str, font=font_type, fill="black")
 
     # Text Box
-    draw.rectangle([15, 365, WIDTH-15, HEIGHT-15], outline="black", width=2, fill="#fdfdfd")
+    draw.rectangle([15, 370, WIDTH-15, HEIGHT-15], outline="black", width=2, fill="#fdfdfd")
     
-    # Wrap and draw rules text
-    lines = textwrap.wrap(text, width=38)
-    y_text = 375
+    # Wrap and draw rules text (adjusted width for larger font)
+    lines = textwrap.wrap(text, width=28)
+    y_text = 380
     for line in lines:
         draw.text((25, y_text), line, font=font_text, fill="black")
-        y_text += 22
+        y_text += 28 # Increased line spacing
 
     # Power/Toughness Box (Bottom Right)
     if power or toughness:
@@ -51,10 +80,10 @@ def generate_label(name, card_type, text, power, toughness, rotate_landscape):
         pt_bbox = draw.textbbox((0, 0), pt_text, font=font_pt)
         pt_width = pt_bbox[2] - pt_bbox[0]
         
-        pt_x = WIDTH - pt_width - 30
-        pt_y = HEIGHT - 55
+        pt_x = WIDTH - pt_width - 35
+        pt_y = HEIGHT - 65
         
-        draw.rectangle([pt_x - 10, pt_y - 5, WIDTH - 15, HEIGHT - 15], outline="black", width=2, fill="#e8e8e8")
+        draw.rectangle([pt_x - 12, pt_y - 5, WIDTH - 15, HEIGHT - 15], outline="black", width=2, fill="#e8e8e8")
         draw.text((pt_x, pt_y), pt_text, font=font_pt, fill="black")
 
     # Rotate for 50x30mm landscape printers if requested
@@ -69,7 +98,32 @@ st.write("Generates a print-ready PNG for a 50mm x 30mm label printer.")
 
 # UI Inputs
 name = st.text_input("Card Name", "Zombie")
-card_type = st.text_input("Type - Subtype", "Token Creature - Zombie")
+
+# Type Selection
+col_type, col_sub = st.columns(2)
+
+with col_type:
+    selected_type = st.selectbox("Type", MTG_TYPES, index=1) # Default to Token Creature
+    if selected_type == "✏️ Custom Type...":
+        final_type = st.text_input("Enter Custom Type", "Creature")
+    else:
+        final_type = selected_type
+
+with col_sub:
+    selected_sub = st.selectbox("Subtype", MTG_SUBTYPES, index=MTG_SUBTYPES.index("Zombie"))
+    if selected_sub == "✏️ Custom Subtype...":
+        final_sub = st.text_input("Enter Custom Subtype", "Warrior")
+    elif selected_sub == "None":
+        final_sub = ""
+    else:
+        final_sub = selected_sub
+
+# Combine Type and Subtype
+if final_sub.strip():
+    card_type_str = f"{final_type} - {final_sub}"
+else:
+    card_type_str = final_type
+
 text = st.text_area("Text Box", "This creature enters the battlefield tapped.")
 
 col1, col2 = st.columns(2)
@@ -79,7 +133,7 @@ toughness = col2.text_input("Toughness", "2")
 rotate = st.checkbox("Rotate 90° for Landscape Feed (50x30mm)", value=True)
 
 if st.button("Generate Token", type="primary"):
-    img = generate_label(name, card_type, text, power, toughness, rotate)
+    img = generate_label(name, card_type_str, text, power, toughness, rotate)
     
     # Show Preview
     st.image(img, caption="Token Preview", width=300)
