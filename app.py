@@ -160,35 +160,36 @@ st.divider()
 st.subheader("🖨️ Printer Settings")
 col_mac, col_rot = st.columns(2)
 with col_mac:
-    mac_address = st.text_input("Niimbot MAC Address", "AA:BB:CC:DD:EE:FF")
+    mac_address = st.text_input("Niimbot MAC Address", "12:06:02:87:D0:31")
 with col_rot:
     st.write("") # Spacing
     st.write("") # Spacing
     rotate = st.checkbox("Rotate 90° for Landscape Feed", value=True)
 
+# Generate Button logic - Stores result in Session State
 if st.button("Generate Token", type="primary"):
-    img = generate_label(name, card_type_str, text, power, toughness, rotate)
-    
-    # Show Preview
-    st.image(img, caption="Token Preview", width=300)
+    st.session_state.generated_img = generate_label(name, card_type_str, text, power, toughness, rotate)
+    st.session_state.file_name = f"{name.replace(' ', '_')}_token.png"
+
+# Display results if image exists in Session State
+if "generated_img" in st.session_state:
+    st.image(st.session_state.generated_img, caption="Token Preview", width=300)
     
     # Prepare Download
     buf = io.BytesIO()
-    img.save(buf, format="PNG")
+    st.session_state.generated_img.save(buf, format="PNG")
     byte_im = buf.getvalue()
-    
-    file_name = f"{name.replace(' ', '_')}_token.png"
     
     st.download_button(
         label="Download PNG Label",
         data=byte_im,
-        file_name=file_name,
+        file_name=st.session_state.file_name,
         mime="image/png"
     )
     
-    # Generate copyable command snippet
+    # Generate copyable command snippet (Updated to `python -m niimprint`)
     st.success("Image generated! Download it, then run this command to print:")
-    print_cmd = f'cd ~/storage/downloads\nniimprint -c bluetooth -m b1 -a "{mac_address}" -r 90 -i "{file_name}"'
+    print_cmd = f'cd ~/storage/downloads\npython -m niimprint -c bluetooth -m b1 -a "{mac_address}" -r 90 -i "{st.session_state.file_name}"'
     st.code(print_cmd, language="bash")
 
 st.divider()
