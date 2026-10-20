@@ -158,9 +158,11 @@ st.divider()
 
 # Printer Settings
 st.subheader("🖨️ Printer Settings")
-col_mac, col_rot = st.columns(2)
+col_mac, col_os, col_rot = st.columns([2, 2, 2])
 with col_mac:
     mac_address = st.text_input("Niimbot MAC Address", "12:06:02:87:D0:31")
+with col_os:
+    os_choice = st.selectbox("Terminal OS", ["Android (Termux)", "Windows", "macOS / Linux"])
 with col_rot:
     st.write("") # Spacing
     st.write("") # Spacing
@@ -187,9 +189,17 @@ if "generated_img" in st.session_state:
         mime="image/png"
     )
     
-    # Generate copyable command snippet (Updated to `python -m niimprint`)
+    # Determine the directory path based on the selected OS
+    if os_choice == "Android (Termux)":
+        cd_path = "cd ~/storage/downloads"
+    elif os_choice == "Windows":
+        cd_path = r"cd %USERPROFILE%\Downloads"
+    else:
+        cd_path = "cd ~/Downloads"
+    
+    # Generate copyable command snippet (Reverted to niimprint)
     st.success("Image generated! Download it, then run this command to print:")
-    print_cmd = f'cd ~/storage/downloads\npython -m niimprint -c bluetooth -m b1 -a "{mac_address}" -r 90 -i "{st.session_state.file_name}"'
+    print_cmd = f'{cd_path}\nniimprint -c bluetooth -m b1 -a "{mac_address}" -r 90 -i "{st.session_state.file_name}"'
     st.code(print_cmd, language="bash")
 
 st.divider()
@@ -210,16 +220,21 @@ with st.expander("ℹ️ Niimbot / Termux Setup Guide"):
     pkg install python libjpeg-turbo libpng -y
     ```
     
-    **3. Install Niimprint tool:**
+    **3. Install Niimprint and missing dependencies:**
     ```bash
-    pip install niimprint
+    pip install pyserial Pillow niimprint
+    ```
+    
+    **4. Patch Termux OS restrictions:**
+    ```bash
+    python -c "import serial; p = serial.__path__[0] + '/tools/list_ports_posix.py'; d = open(p).read().replace('raise ImportError', 'pass #'); open(p, 'w').write(d + '\\n\\ndef comports(): return []\\n')"
     ```
     
     ---
     
     ### Windows / Mac / Linux Setup
-    Simply install the python package via pip:
+    Simply install the python packages via pip:
     ```bash
-    pip install niimprint
+    pip install pyserial Pillow niimprint
     ```
     """)
