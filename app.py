@@ -40,39 +40,66 @@ def generate_label(name, card_type_str, text, power, toughness, rotate_landscape
     # Create white canvas
     img = Image.new('RGB', (WIDTH, HEIGHT), color='white')
     draw = ImageDraw.Draw(img)
+    
+    font_bold_path = "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf"
+    font_reg_path = "/usr/share/fonts/truetype/freefont/FreeSans.ttf"
 
-    # Increased Font Sizes
+    max_text_width = WIDTH - 50 # 25px padding on left and right
+
+    # --- Auto-Scale Name Font ---
+    name_size = 32
     try:
-        font_title = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSansBold.ttf", 32)
-        font_type  = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSansBold.ttf", 26)
-        font_text  = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 24)
-        font_pt    = ImageFont.truetype("/usr/share/fonts/truetype/freefont/FreeSansBold.ttf", 30)
+        font_title = ImageFont.truetype(font_bold_path, name_size)
+        while draw.textlength(name, font=font_title) > max_text_width and name_size > 12:
+            name_size -= 1
+            font_title = ImageFont.truetype(font_bold_path, name_size)
     except IOError:
-        font_title = font_type = font_text = font_pt = ImageFont.load_default()
+        font_title = ImageFont.load_default()
+
+    # --- Auto-Scale Type/Subtype Font ---
+    type_size = 26
+    try:
+        font_type = ImageFont.truetype(font_bold_path, type_size)
+        while draw.textlength(card_type_str, font=font_type) > max_text_width and type_size > 10:
+            type_size -= 1
+            font_type = ImageFont.truetype(font_bold_path, type_size)
+    except IOError:
+        font_type = ImageFont.load_default()
+
+    # Static Fonts for Rules Text and P/T
+    try:
+        font_text = ImageFont.truetype(font_reg_path, 24)
+        font_pt   = ImageFont.truetype(font_bold_path, 30)
+    except IOError:
+        font_text = font_pt = ImageFont.load_default()
 
     # Outer Border
     draw.rectangle([10, 10, WIDTH-10, HEIGHT-10], outline="black", width=4)
 
-    # Name Box
+    # Name Box (Vertically centered based on scaled font size)
     draw.rectangle([15, 15, WIDTH-15, 65], outline="black", width=2, fill="#e8e8e8")
-    draw.text((25, 22), name, font=font_title, fill="black")
+    name_bbox = draw.textbbox((0, 0), name, font=font_title)
+    name_y = 15 + (50 - (name_bbox[3] - name_bbox[1])) // 2 - 2
+    draw.text((25, name_y), name, font=font_title, fill="black")
 
     # Blank Art Box Placeholder
     draw.rectangle([15, 70, WIDTH-15, 315], outline="black", width=2, fill="#ffffff")
 
-    # Type Box
+    # Type Box (Vertically centered based on scaled font size)
     draw.rectangle([15, 320, WIDTH-15, 365], outline="black", width=2, fill="#e8e8e8")
-    draw.text((25, 328), card_type_str, font=font_type, fill="black")
+    type_bbox = draw.textbbox((0, 0), card_type_str, font=font_type)
+    type_y = 320 + (45 - (type_bbox[3] - type_bbox[1])) // 2 - 2
+    draw.text((25, type_y), card_type_str, font=font_type, fill="black")
 
     # Text Box
     draw.rectangle([15, 370, WIDTH-15, HEIGHT-15], outline="black", width=2, fill="#fdfdfd")
     
-    # Wrap and draw rules text (adjusted width for larger font)
+    # Wrap and draw rules text
     lines = textwrap.wrap(text, width=28)
     y_text = 380
     for line in lines:
         draw.text((25, y_text), line, font=font_text, fill="black")
-        y_text += 28 # Increased line spacing
+        y_text += 28
 
     # Power/Toughness Box (Bottom Right)
     if power or toughness:
@@ -103,7 +130,7 @@ name = st.text_input("Card Name", "Zombie")
 col_type, col_sub = st.columns(2)
 
 with col_type:
-    selected_type = st.selectbox("Type", MTG_TYPES, index=1) # Default to Token Creature
+    selected_type = st.selectbox("Type", MTG_TYPES, index=1)
     if selected_type == "✏️ Custom Type...":
         final_type = st.text_input("Enter Custom Type", "Creature")
     else:
