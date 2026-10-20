@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  mtg-label-maker:
+    build: .
+    container_name: mtg-label-maker
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./app.py:/app/app.py
+    restart: unless-stopped
